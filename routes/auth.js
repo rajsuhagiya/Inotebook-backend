@@ -1,8 +1,12 @@
 const express = require("express");
 const User = require("../models/User");
 const { body, validationResult } = require("express-validator");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 
 const router = express.Router();
+
+const JWT_SECRET = "https.inotebook";
 
 // Create a User using: POST "/api/auth/createuser" - No Login Required
 router.post(
@@ -24,12 +28,21 @@ router.post(
           .status(400)
           .json({ error: "User with this email is alredt exists" });
       }
+      const salt = bcrypt.genSaltSync(10);
+      secPass = bcrypt.hashSync(req.body.password, salt);
       user = await User.create({
         name: req.body.name,
         email: req.body.email,
-        password: req.body.password,
+        password: secPass,
       });
-      res.status(200).json({ message: "Successfully created a user" });
+      const data = {
+        user: {
+          id: user.id,
+        },
+      };
+      const authtoken = jwt.sign(data, JWT_SECRET);
+      // res.status(200).json({ message: "Successfully created a user" });
+      res.status(200).json({ authtoken });
     } catch (error) {
       res.status(500).json({ error: "Some error occured" });
     }
