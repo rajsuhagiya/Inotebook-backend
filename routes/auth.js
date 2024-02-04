@@ -44,7 +44,46 @@ router.post(
       // res.status(200).json({ message: "Successfully created a user" });
       res.status(200).json({ authtoken });
     } catch (error) {
-      res.status(500).json({ error: "Some error occured" });
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  }
+);
+
+// Authenticate a User using: POST "/api/auth/login" - No Login Required
+router.post(
+  "/login",
+  [
+    body("email", "Enter a Valid Email").isEmail(),
+    body("password", "Password can not be blank").exists(),
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+    const { email, password } = req.body;
+    try {
+      let user = await User.findOne({ email });
+      if (!user) {
+        return res
+          .status(400)
+          .json({ error: "email and password is incorrect" });
+      }
+      const passwordCompare = bcrypt.compareSync(password, user.password);
+      if (!passwordCompare) {
+        return res
+          .status(400)
+          .json({ error: "email and password is incorrect" });
+      }
+      const data = {
+        user: {
+          id: user.id,
+        },
+      };
+      const authtoken = jwt.sign(data, JWT_SECRET);
+      res.status(200).json({ authtoken });
+    } catch (error) {
+      res.status(500).json({ error: "Internal Server Error" });
     }
   }
 );
