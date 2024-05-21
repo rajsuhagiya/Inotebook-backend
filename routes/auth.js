@@ -18,6 +18,7 @@ router.post(
     body("password", "Password must be 5 charachters").isLength({ min: 5 }),
   ],
   async (req, res) => {
+    let success = false;
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
@@ -42,8 +43,9 @@ router.post(
         },
       };
       const authtoken = jwt.sign(data, JWT_SECRET);
+      success = true;
       // res.status(200).json({ message: "Successfully created a user" });
-      res.status(200).json({ authtoken });
+      res.status(200).json({ success, authtoken });
     } catch (error) {
       res.status(500).json({ error: "Internal Server Error" });
     }
